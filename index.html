@@ -11,7 +11,7 @@
       max-width: 600px;
       margin: auto;
     }
-    input, textarea, button {
+    input, textarea, button, label {
       display: block;
       margin-bottom: 10px;
       width: 100%;
@@ -35,6 +35,11 @@
     .search {
       margin-bottom: 20px;
     }
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -45,6 +50,7 @@
   </div>
 
   <form id="cardForm">
+    <div id="errorMsg" class="error"></div>
     <input type="text" id="name" placeholder="Nom de la carte" required />
     <input type="text" id="edition" placeholder="Édition / Série" />
     <input type="file" id="front" accept="image/*" required />
@@ -53,6 +59,7 @@
   </form>
 
   <button onclick="exportData()">📤 Exporter</button>
+  <label for="importFile">📥 Importer une collection (.json)</label>
   <input type="file" id="importFile" accept="application/json" style="margin-top: 10px" />
 
   <div id="cardList"></div>
@@ -62,6 +69,7 @@
     const cardList = document.getElementById('cardList');
     const searchInput = document.getElementById('searchInput');
     const importFile = document.getElementById('importFile');
+    const errorMsg = document.getElementById('errorMsg');
 
     function toBase64(file) {
       return new Promise((resolve, reject) => {
@@ -117,14 +125,24 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      errorMsg.textContent = '';
 
-      const name = document.getElementById('name').value;
-      const edition = document.getElementById('edition').value;
-      const front = document.getElementById('front').files[0];
-      const back = document.getElementById('back').files[0];
+      const name = document.getElementById('name').value.trim();
+      const edition = document.getElementById('edition').value.trim();
+      const frontInput = document.getElementById('front');
+      const backInput = document.getElementById('back');
 
-      const front64 = await toBase64(front);
-      const back64 = await toBase64(back);
+      if (!name) {
+        errorMsg.textContent = 'Le nom de la carte est requis.';
+        return;
+      }
+      if (!frontInput.files.length || !backInput.files.length) {
+        errorMsg.textContent = 'Les deux images (recto et verso) sont requises.';
+        return;
+      }
+
+      const front64 = await toBase64(frontInput.files[0]);
+      const back64 = await toBase64(backInput.files[0]);
 
       const newCard = { name, edition, front: front64, back: back64 };
 
