@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ma Collection de Cartes</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, textarea, button {
+      display: block;
+      margin-bottom: 10px;
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+    .card img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin-top: 5px;
+    }
+    .actions {
+      margin-top: 10px;
+    }
+    .search {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📇 Ma Collection de Cartes</h1>
+
+  <div class="search">
+    <input type="text" id="searchInput" placeholder="🔍 Rechercher une carte...">
+  </div>
+
+  <form id="cardForm">
+    <input type="text" id="name" placeholder="Nom de la carte" required />
+    <input type="text" id="edition" placeholder="Édition / Série" />
+    <input type="file" id="front" accept="image/*" required />
+    <input type="file" id="back" accept="image/*" required />
+    <button type="submit">Ajouter la carte</button>
+  </form>
+
+  <button onclick="exportData()">📤 Exporter</button>
+  <input type="file" id="importFile" accept="application/json" style="margin-top: 10px" />
+
+  <div id="cardList"></div>
+
+  <script>
+    const form = document.getElementById('cardForm');
+    const cardList = document.getElementById('cardList');
+    const searchInput = document.getElementById('searchInput');
+    const importFile = document.getElementById('importFile');
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    function loadCards(filter = '') {
+      const cards = JSON.parse(localStorage.getItem('cards') || '[]');
+      cardList.innerHTML = '';
+      cards.forEach((card, index) => {
+        if (filter && !card.name.toLowerCase().includes(filter.toLowerCase())) return;
+
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card';
+        cardDiv.innerHTML = `
+          <strong>${card.name}</strong><br>
+          <em>${card.edition}</em>
+          <img src="${card.front}" alt="Recto">
+          <img src="${card.back}" alt="Verso">
+          <div class="actions">
+            <button onclick="editCard(${index})">✏️ Modifier</button>
+            <button onclick="deleteCard(${index})">🗑️ Supprimer</button>
+          </div>
+        `;
+        cardList.appendChild(cardDiv);
+      });
+    }
+
+    function editCard(index) {
+      const cards = JSON.parse(localStorage.getItem('cards'));
+      const card = cards[index];
+
+      document.getElementById('name').value = card.name;
+      document.getElementById('edition').value = card.edition;
+      document.getElementById('front').value = '';
+      document.getElementById('back').value = '';
+
+      cards.splice(index, 1);
+      localStorage.setItem('cards', JSON.stringify(cards));
+      loadCards();
+    }
+
+    function deleteCard(index) {
+      const cards = JSON.parse(localStorage.getItem('cards'));
+      cards.splice(index, 1);
+      localStorage.setItem('cards', JSON.stringify(cards));
+      loadCards();
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value;
+      const edition = document.getElementById('edition').value;
+      const front = document.getElementById('front').files[0];
+      const back = document.getElementById('back').files[0];
+
+      const front64 = await toBase64(front);
+      const back64 = await toBase64(back);
+
+      const newCard = { name, edition, front: front64, back: back64 };
+
+      const cards = JSON.parse(localStorage.getItem('cards') || '[]');
+      cards.push(newCard);
+      localStorage.setItem('cards', JSON.stringify(cards));
+
+      form.reset();
+      loadCards();
+    });
+
+    function exportData() {
+      const data = localStorage.getItem('cards');
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'collection.json';
+      a.click();
+    }
+
+    importFile.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        localStorage.setItem('cards', reader.result);
+        loadCards();
+      };
+      reader.readAsText(file);
+    });
+
+    searchInput.addEventListener('input', () => {
+      loadCards(searchInput.value);
+    });
+
+    loadCards();
+  </script>
+</body>
+</html>
