@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ma Collection de Cartes</title>
+  <title>Ma Collection de Cartes 2</title>
   <style>
     body {
       font-family: sans-serif;
@@ -58,8 +58,8 @@
     function toBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject('Erreur de lecture du fichier');
         reader.readAsDataURL(file);
       });
     }
@@ -99,11 +99,13 @@
         cards.push(newCard);
         localStorage.setItem('cards', JSON.stringify(cards));
 
-        frontInput.value = '';
-        backInput.value = '';
-        form.reset();
+        frontInput.value = null;
+        backInput.value = null;
+        document.getElementById('name').value = '';
+        document.getElementById('edition').value = '';
 
         successMsg.textContent = '✅ Carte ajoutée avec succès';
+        console.log('Carte ajoutée :', newCard);
       } catch (err) {
         console.error('Erreur d’ajout :', err);
         errorMsg.textContent = 'Une erreur est survenue lors de l’ajout de la carte.';
