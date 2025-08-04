@@ -25,11 +25,16 @@
       border: 1px solid #ccc;
       padding: 10px;
       margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .card img {
-      max-width: 100%;
+      width: 60px;
       height: auto;
-      margin-top: 5px;
+    }
+    .card strong {
+      font-size: 18px;
     }
   </style>
 </head>
@@ -39,6 +44,13 @@
   <div class="filters">
     <input type="text" id="searchName" placeholder="🔍 Filtrer par nom">
     <input type="text" id="searchEdition" placeholder="🔍 Filtrer par édition">
+    <select id="sortOption">
+      <option value="">-- Trier par --</option>
+      <option value="name-asc">Nom A-Z</option>
+      <option value="name-desc">Nom Z-A</option>
+      <option value="date-desc">Ajout récent</option>
+      <option value="date-asc">Ajout ancien</option>
+    </select>
     <button onclick="loadCards()">🔄 Appliquer les filtres</button>
   </div>
 
@@ -52,13 +64,25 @@
       const list = document.getElementById('cardList');
       const nameFilter = document.getElementById('searchName').value.toLowerCase();
       const editionFilter = document.getElementById('searchEdition').value.toLowerCase();
+      const sortOption = document.getElementById('sortOption').value;
 
       list.innerHTML = '';
 
-      const filtered = cards.filter(card => {
+      let filtered = cards.filter(card => {
         return card.name.toLowerCase().includes(nameFilter) &&
                card.edition.toLowerCase().includes(editionFilter);
       });
+
+      if (sortOption === 'name-asc') {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortOption === 'name-desc') {
+        filtered.sort((a, b) => b.name.localeCompare(a.name));
+      } else if (sortOption === 'date-asc') {
+        // assumes cards were added in order; no timestamp field
+        // so we just keep array order
+      } else if (sortOption === 'date-desc') {
+        filtered.reverse();
+      }
 
       if (filtered.length === 0) {
         list.innerHTML = '<p>Aucune carte trouvée.</p>';
@@ -69,10 +93,8 @@
         const div = document.createElement('div');
         div.className = 'card';
         div.innerHTML = `
-          <strong>${card.name}</strong><br>
-          <em>${card.edition}</em>
-          <img src="${card.front}" alt="Recto">
-          <img src="${card.back}" alt="Verso">
+          <img src="${card.front}" alt="Aperçu recto">
+          <strong>${card.name}</strong>
         `;
         list.appendChild(div);
       });
