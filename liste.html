@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liste des Cartes</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+    }
+    .filters {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+    }
+    input, select, button {
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+    .card img {
+      max-width: 100%;
+      height: auto;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📋 Liste des Cartes</h1>
+
+  <div class="filters">
+    <input type="text" id="searchName" placeholder="🔍 Filtrer par nom">
+    <input type="text" id="searchEdition" placeholder="🔍 Filtrer par édition">
+    <button onclick="loadCards()">🔄 Appliquer les filtres</button>
+  </div>
+
+  <div id="cardList"></div>
+
+  <a href="index.html">⬅️ Retour à l'ajout</a>
+
+  <script>
+    function loadCards() {
+      const cards = JSON.parse(localStorage.getItem('cards') || '[]');
+      const list = document.getElementById('cardList');
+      const nameFilter = document.getElementById('searchName').value.toLowerCase();
+      const editionFilter = document.getElementById('searchEdition').value.toLowerCase();
+
+      list.innerHTML = '';
+
+      const filtered = cards.filter(card => {
+        return card.name.toLowerCase().includes(nameFilter) &&
+               card.edition.toLowerCase().includes(editionFilter);
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<p>Aucune carte trouvée.</p>';
+        return;
+      }
+
+      filtered.forEach((card, index) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <strong>${card.name}</strong><br>
+          <em>${card.edition}</em>
+          <img src="${card.front}" alt="Recto">
+          <img src="${card.back}" alt="Verso">
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    loadCards();
+  </script>
+</body>
+</html>
