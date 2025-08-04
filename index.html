@@ -58,50 +58,57 @@
     function toBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
       });
     }
 
-    form.addEventListener('submit', async (e) => {
+    async function handleSubmit(e) {
       e.preventDefault();
       errorMsg.textContent = '';
       successMsg.textContent = '';
 
+      const name = document.getElementById('name').value.trim();
+      const edition = document.getElementById('edition').value.trim();
+      const frontInput = document.getElementById('front');
+      const backInput = document.getElementById('back');
+
+      if (!name) {
+        errorMsg.textContent = 'Le nom de la carte est requis.';
+        return;
+      }
+      if (!frontInput.files.length || !backInput.files.length) {
+        errorMsg.textContent = 'Les deux images (recto et verso) sont requises.';
+        return;
+      }
+
       try {
-        const name = document.getElementById('name').value.trim();
-        const edition = document.getElementById('edition').value.trim();
-        const frontInput = document.getElementById('front');
-        const backInput = document.getElementById('back');
-
-        if (!name) {
-          errorMsg.textContent = 'Le nom de la carte est requis.';
-          return;
-        }
-        if (!frontInput.files.length || !backInput.files.length) {
-          errorMsg.textContent = 'Les deux images (recto et verso) sont requises.';
-          return;
-        }
-
         const front64 = await toBase64(frontInput.files[0]);
         const back64 = await toBase64(backInput.files[0]);
 
-        const newCard = { name, edition, front: front64, back: back64 };
+        const newCard = {
+          name,
+          edition,
+          front: front64,
+          back: back64,
+          timestamp: Date.now()
+        };
+
         const cards = JSON.parse(localStorage.getItem('cards') || '[]');
         cards.push(newCard);
         localStorage.setItem('cards', JSON.stringify(cards));
 
+        frontInput.value = '';
+        backInput.value = '';
         form.reset();
-        frontInput.value = null;
-        backInput.value = null;
 
         successMsg.textContent = '✅ Carte ajoutée avec succès';
       } catch (err) {
-        console.error(err);
-        errorMsg.textContent = "Une erreur est survenue. Veuillez réessayer.";
+        console.error('Erreur d’ajout :', err);
+        errorMsg.textContent = 'Une erreur est survenue lors de l’ajout de la carte.';
       }
-    });
+    }
 
     function exportData() {
       const data = localStorage.getItem('cards');
@@ -115,12 +122,19 @@
 
     importFile.addEventListener('change', (e) => {
       const file = e.target.files[0];
+      if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
         localStorage.setItem('cards', reader.result);
+        successMsg.textContent = '📥 Importation réussie !';
+      };
+      reader.onerror = () => {
+        errorMsg.textContent = 'Erreur lors de l’importation.';
       };
       reader.readAsText(file);
     });
+
+    form.addEventListener('submit', handleSubmit);
   </script>
 </body>
 </html>
